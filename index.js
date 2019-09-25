@@ -1,13 +1,13 @@
 var app = require('express')();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
-// var port = process.env.PORT || 5000;
+var port = process.env.PORT || 5000;
 
 var list_users = {};
 
-// http.listen(port, function(){
-//   console.log('Listening on *:' + port);
-// });
+http.listen(port, function(){
+  console.log('Listening on *:' + port);
+});
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
