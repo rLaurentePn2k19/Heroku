@@ -1,12 +1,45 @@
 var app = require('express')();
 var http = require('http').createServer(app);
-var port = process.env.PORT || 5000
+var io = require('socket.io')(http);
+var port = process.env.PORT || 5000;
+
+var list_users = {};
+
+http.listen(port, function(){
+  console.log('Listening on *:' + port);
+});
 
 app.get('/', function(req, res){
-//   res.send('<h1>Hello world</h1>');
-  res.sendFile(__dirname + '/index.html')
+  res.sendFile(__dirname + '/index.html');
 });
 
-http.listen(3000, function(){
-  console.log('listening on *: ' + port);
+io.on('connection', function(socket){
+  socket.on('set_username', (function(data){
+    socket.username = data.username;
+    if(!list_users.hasOwnProperty(data)){
+      socket.username = data.username;
+      list_users[socket.username] = { active : true };
+      console.log('a user connected ' + socket.username);
+      io.sockets.emit('set_username', list_users);
+      console.log(list_users);
+    }
+  }))
+  socket.on('disconnect', function(){
+    if(!socket.username) {
+      return;
+    }
+    list_users[socket.username].active = false;
+    io.sockets.emit('set_username', list_users);
+    console.log('user disconnected '+ socket.username);
+    let used = socket.username;
+    delete list_users[used];
+    console.log(list_users);
+  });
+  socket.on('chat message', function(msg){
+    io.emit('chat message', msg);
+  });
+  socket.on('typing', function () {
+    socket.broadcast.emit('typing', { username: socket.username })
+    })
 });
+
